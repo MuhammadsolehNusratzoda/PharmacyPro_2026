@@ -11,6 +11,12 @@
 
 ---
 
+## 📸 Preview
+
+![Swagger UI](docs/swagger.png)
+
+![All endpoints](docs/swagger-overview.png)
+
 ## 🌐 About / Дар бораи лоиҳа / О проекте
 
 | Language | Description |
