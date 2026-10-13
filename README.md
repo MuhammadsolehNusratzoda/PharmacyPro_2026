@@ -192,8 +192,8 @@ dotnet tool install --global dotnet-ef
 ### 1. Clone
 
 ```bash
-git clone https://github.com/<your-username>/PharmacyPro.git
-cd PharmacyPro
+git clone https://github.com/MuhammadsolehNusratzoda/PharmacyPro_2026.git
+cd PharmacyPro_2026
 ```
 
 ### 2. Configure
