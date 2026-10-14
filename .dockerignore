@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.idea/
+.git/
+.gitignore
+.env
+.env.*
+docs/
+README.md
+**/*.user
+**/appsettings.Development.json
+Dockerfile
+docker-compose.yml

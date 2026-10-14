@@ -3,10 +3,11 @@
 > **Pharmacy financial accounting REST API** built with ASP.NET Core, Clean Architecture and PostgreSQL.
 > Track daily sales, expenses and payments to suppliers, and get an instant monthly profit/loss report.
 
-![.NET](https://img.shields.io/badge/.NET-8%2F9-512BD4?logo=dotnet)
+![.NET](https://img.shields.io/badge/.NET-9-512BD4?logo=dotnet)
 ![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-Web%20API-5C2D91)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-336791?logo=postgresql&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT%20%2B%20Refresh-000000?logo=jsonwebtokens)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Docs-Swagger-85EA2D?logo=swagger&logoColor=black)
 
 ---
@@ -16,6 +17,8 @@
 ![Swagger UI](docs/swagger.png)
 
 ![All endpoints](docs/swagger-overview.png)
+
+---
 
 ## 🌐 About / Дар бораи лоиҳа / О проекте
 
@@ -42,6 +45,7 @@
 - 🛡️ Global exception handling, request logging, rate limiting on auth endpoints
 - 🕐 Timezone-aware reports (Asia/Dushanbe, UTC+5)
 - 🗑️ Soft delete for all financial data
+- 🐳 **Docker + docker-compose** (API + PostgreSQL with one command)
 - 📚 Swagger UI with Bearer authentication
 
 ---
@@ -50,12 +54,13 @@
 
 | Layer | Technology |
 |---|---|
-| Framework | ASP.NET Core Web API |
+| Framework | ASP.NET Core Web API (.NET 9) |
 | Language | C# |
 | Database | PostgreSQL (Npgsql) |
 | ORM | Entity Framework Core + Migrations |
 | Auth | ASP.NET Core Identity, JWT Bearer, Refresh Tokens |
 | Docs | Swagger (Swashbuckle) |
+| DevOps | Docker, docker-compose |
 | Patterns | Clean Architecture, Repository, DTO, Dependency Injection |
 
 ---
@@ -91,6 +96,9 @@ PharmacyPro/
 │       ├── Extensions/                # Swagger setup
 │       ├── Middlewares/               # Exception handling, Request logging
 │       └── Program.cs
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
 ```
 
 **Dependency rule:** `API → Infrastructure → Application → Domain`
@@ -170,11 +178,11 @@ Paged responses additionally include `pageNumber`, `pageSize`, `totalCount`, `to
 {
   "year": 2026,
   "month": 10,
-  "totalRevenue": 0,
-  "totalPaidToFirms": 0,
-  "totalOperatingExpenses": 0,
-  "totalCosts": 0,
-  "netProfit": 0,
+  "totalRevenue": 75000,
+  "totalPaidToFirms": 40000,
+  "totalOperatingExpenses": 800,
+  "totalCosts": 40800,
+  "netProfit": 34200,
   "isLoss": false,
   "expensesByCategory": [],
   "firmShares": []
@@ -185,61 +193,66 @@ Paged responses additionally include `pageNumber`, `pageSize`, `totalCount`, `to
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Option 1: Docker (recommended)
 
-- [.NET SDK](https://dotnet.microsoft.com/download) (8.0 or newer)
-- [PostgreSQL](https://www.postgresql.org/download/) 14+
-- `dotnet-ef` tool
+Requires only [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+git clone https://github.com/MuhammadsolehNusratzoda/PharmacyPro_2026.git
+cd PharmacyPro_2026
+
+# 1. Create your .env file from the example and set your own values
+cp .env.example .env
+
+# 2. Build and run API + PostgreSQL
+docker compose up --build
+```
+
+Open Swagger: **http://localhost:8081/swagger**
+
+Default admin (from `.env`): `admin@pharmacypro.tj` / the `ADMIN_PASSWORD` you set.
+
+Stop everything:
+
+```bash
+docker compose down        # keeps the database data
+docker compose down -v     # also deletes the database data
+```
+
+`.env` variables:
+
+| Variable | Description |
+|---|---|
+| `POSTGRES_PASSWORD` | PostgreSQL password |
+| `JWT_KEY` | JWT signing key (at least 32 characters) |
+| `ADMIN_EMAIL` | Seeded admin email |
+| `ADMIN_PASSWORD` | Seeded admin password |
+
+> `.env` is git-ignored, so your secrets never reach GitHub.
+
+### Option 2: Run locally
+
+Prerequisites: [.NET 9 SDK](https://dotnet.microsoft.com/download), PostgreSQL 14+, `dotnet-ef` tool.
 
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-### 1. Clone
+Store your secrets with user-secrets (they stay on your machine only):
 
 ```bash
-git clone https://github.com/MuhammadsolehNusratzoda/PharmacyPro_2026.git
-cd PharmacyPro_2026
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=PharmacyProDb;Username=postgres;Password=YOUR_PASSWORD" --project src/PharmacyPro.API
+dotnet user-secrets set "Jwt:Key" "<random-string-at-least-32-chars>" --project src/PharmacyPro.API
 ```
 
-### 2. Configure
-
-Edit `src/PharmacyPro.API/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=PharmacyProDb;Username=postgres;Password=YOUR_PASSWORD"
-  },
-  "Jwt": {
-    "Key": "CHANGE_ME_TO_A_RANDOM_SECRET_AT_LEAST_32_CHARS_LONG",
-    "Issuer": "PharmacyPro",
-    "Audience": "PharmacyProClient",
-    "AccessTokenMinutes": 15,
-    "RefreshTokenDays": 7
-  },
-  "SeedAdmin": {
-    "Email": "admin@pharmacypro.tj",
-    "Password": "Admin@12345"
-  },
-  "Business": { "TimeZoneId": "Asia/Dushanbe" },
-  "Cors": { "Origins": [ "http://localhost:3000", "http://localhost:5173" ] }
-}
-```
-
-Keep secrets out of git, use user-secrets in development:
-
-```bash
-dotnet user-secrets init --project src/PharmacyPro.API
-dotnet user-secrets set "Jwt:Key" "<random-64-char-secret>" --project src/PharmacyPro.API
-```
-
-### 3. Run
+Run:
 
 ```bash
 dotnet build
 dotnet run --project src/PharmacyPro.API
 ```
+
+Swagger: `http://localhost:5124/swagger`
 
 On first start the app automatically:
 
@@ -248,9 +261,7 @@ On first start the app automatically:
 3. Seeds the default admin user
 4. Seeds default expense categories (Свет, Аренда, Маош, Барқ)
 
-Open Swagger: `https://localhost:<port>/swagger`
-
-### 4. Migrations (manual)
+### Migrations (manual)
 
 ```bash
 dotnet ef migrations add <Name> -p src/PharmacyPro.Infrastructure -s src/PharmacyPro.API -o Data/Migrations
@@ -267,7 +278,8 @@ dotnet ef database update -p src/PharmacyPro.Infrastructure -s src/PharmacyPro.A
 - Reuse of a revoked refresh token revokes all sessions of that user
 - Rate limiting on `login` and `refresh` (10 requests/minute per IP)
 - Generic login error message (no user enumeration)
-- Change the seeded admin password and `Jwt:Key` before deploying
+- Secrets come from `.env` / user-secrets, never from the repository
+- Change the seeded admin password and `JWT_KEY` before deploying
 
 ---
 
@@ -291,7 +303,7 @@ dotnet ef database update -p src/PharmacyPro.Infrastructure -s src/PharmacyPro.A
 
 ## 🗺️ Roadmap
 
-- [ ] Docker + docker-compose (API + PostgreSQL)
+- [x] Docker + docker-compose (API + PostgreSQL)
 - [ ] Export reports to Excel / PDF
 - [ ] Inventory and medicine catalog
 - [ ] Mobile client (React Native / Flutter)
@@ -304,7 +316,7 @@ dotnet ef database update -p src/PharmacyPro.Infrastructure -s src/PharmacyPro.A
 **Muhammadsoleh Nusratzoda**
 Back-end C#/.NET developer · Tajikistan
 
-Skills: C#, ASP.NET Core, EF Core, PostgreSQL, JWT, Middleware, Clean Architecture
+Skills: C#, ASP.NET Core, EF Core, PostgreSQL, JWT, Middleware, Clean Architecture, Docker
 
 ---
 

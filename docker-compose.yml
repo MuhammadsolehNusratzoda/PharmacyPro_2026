@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pharmacypro-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: PharmacyProDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Дар файли .env POSTGRES_PASSWORD-ро нависед}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d PharmacyProDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: pharmacypro-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Development, то Swagger дастрас бошад
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=PharmacyProDb;Username=postgres;Password=${POSTGRES_PASSWORD}
+      Jwt__Key: ${JWT_KEY:?Дар файли .env JWT_KEY-ро нависед (камаш 32 аломат)}
+      SeedAdmin__Email: ${ADMIN_EMAIL:-admin@pharmacypro.tj}
+      SeedAdmin__Password: ${ADMIN_PASSWORD:?Дар файли .env ADMIN_PASSWORD-ро нависед}
+    ports:
+      - "8081:8080"
+
+volumes:
+  pgdata:
